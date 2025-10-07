@@ -1,10 +1,14 @@
 // api/records.js
 import { pool } from "../db.js";
 
+const allowedOrigin =
+  process.env.NODE_ENV === "production"
+    ? "https://brokken-front-yt8g.vercel.app"
+    : "*";
 export default async function handler(req, res) {
   // CORS
-  res.setHeader("Access-Control-Allow-Origin", "*"); // or your frontend URL
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigin); 
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") {
