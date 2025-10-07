@@ -43,9 +43,8 @@ export default async function handler(req, res) {
   // DELETE a record
   if (req.method === "DELETE") {
     const { id } = req.query; 
-
     if (!id) return res.status(400).json({ error: "Record ID required" });
-
+  
     try {
       await pool.query("DELETE FROM records WHERE id = $1", [id]);
       return res.status(200).json({ message: "Record deleted successfully" });
@@ -54,7 +53,8 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "DB delete error" });
     }
   }
+  
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
 
-  res.setHeader("Allow", ["GET", "POST", "DELETE"]);
   res.status(405).end(`Method ${req.method} Not Allowed`);
 }
