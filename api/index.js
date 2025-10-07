@@ -28,5 +28,5 @@ app.get('/', (req, res) => {
   res.json({ message: 'Brokken Back API is running!' });
 });
 
-// ✅ just export the app for Vercel serverless
+ 
 export default app;
