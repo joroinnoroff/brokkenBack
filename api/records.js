@@ -3,8 +3,8 @@ import { pool } from "../db.js";
 
 const allowedOrigin =
   process.env.NODE_ENV === "production"
-    ? "https://brokken-front-yt8g.vercel.app"
-    : "http://localhost:3000";
+    ? "http://localhost:3000"
+    : "*";
 export default async function handler(req, res) {
   // CORS
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin); 
