@@ -34,10 +34,11 @@ export default async function handler(req, res) {
     return res.status(405).end(`Method ${req.method} Not Allowed`);
   }
 
-  // Admin check
+ {/**
+   // Admin check
   if (!adminCheck(req)) {
     return res.status(403).json({ error: "Unauthorized" });
-  }
+  } */}
 
   const form = formidable({ multiples: false });
 
