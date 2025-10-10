@@ -94,3 +94,4 @@ public/
 # Misc
 *.swp
 *.swo
+.env
