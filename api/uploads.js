@@ -37,7 +37,8 @@ export default async function handler(req, res) {
 
   try {
     const { files } = await parseForm(req); // await parsing
-    const file = files.file;
+    const file = Array.isArray(files.file) ? files.file[0] : files.file;
+
     if (!file) return res.status(400).json({ error: "No file uploaded" });
 
     const fileStream = fs.createReadStream(file.filepath);
