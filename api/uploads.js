@@ -1,7 +1,6 @@
 import formidable from "formidable";
 import fs from "fs";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import cookie from "cookie";
 
 export const config = { api: { bodyParser: false } };
 
@@ -13,10 +12,15 @@ const s3 = new S3Client({
   },
 });
 
-function adminCheck(req) {
-  const cookies = cookie.parse(req.headers.cookie || "");
-  return cookies.loggedIn === "true";
-}
+// helper to parse form using a promise
+const parseForm = (req) =>
+  new Promise((resolve, reject) => {
+    const form = formidable({ multiples: false });
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
+    });
+  });
 
 export default async function handler(req, res) {
   // CORS
@@ -29,22 +33,10 @@ export default async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
   if (req.method === "OPTIONS") return res.status(200).end();
+  if (req.method !== "POST") return res.status(405).end();
 
-  if (req.method !== "POST") {
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
-  }
-
- {/**
-   // Admin check
-  if (!adminCheck(req)) {
-    return res.status(403).json({ error: "Unauthorized" });
-  } */}
-
-  const form = formidable({ multiples: false });
-
-  form.parse(req, async (err, fields, files) => {
-    if (err) return res.status(500).json({ error: err.message });
-
+  try {
+    const { files } = await parseForm(req); // await parsing
     const file = files.file;
     if (!file) return res.status(400).json({ error: "No file uploaded" });
 
@@ -52,21 +44,19 @@ export default async function handler(req, res) {
     const prefix = process.env.NODE_ENV === "development" ? "dev/" : "";
     const key = `${prefix}uploads/${file.originalFilename}`;
 
-    try {
-      await s3.send(
-        new PutObjectCommand({
-          Bucket: process.env.S3_BUCKET_NAME,
-          Key: key,
-          Body: fileStream,
-          ContentType: file.mimetype,
-        })
-      );
+    await s3.send(
+      new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: key,
+        Body: fileStream,
+        ContentType: file.mimetype,
+      })
+    );
 
-      const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-      res.status(200).json({ url, key });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Upload failed" });
-    }
-  });
+    const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    return res.status(200).json({ url, key });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: err.message || "Upload failed" });
+  }
 }
