@@ -50,7 +50,7 @@ export default async function handler(req, res) {
         Key: key,
         Body: fileStream,
         ContentType: file.mimetype,
-        ACL: "public-read", // ✅ Makes object publicly readable
+ 
       })
     );
 
