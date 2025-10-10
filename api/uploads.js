@@ -36,10 +36,11 @@ export default async function handler(req, res) {
 
   if (req.method === "OPTIONS") return res.status(200).end();
 
-  if (req.method === "POST") {
+ {/**
+   if (req.method === "POST") {
     if (!adminCheck(req)) {
       return res.status(403).json({ error: "Unauthorized" });
-    }
+    } */}
 
     const form = formidable({ multiples: false });
 
