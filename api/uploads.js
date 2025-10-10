@@ -53,10 +53,17 @@ export default async function handler(req, res) {
       })
     );
 
+    console.log("files:", files);
+console.log("file:", files.file);
+console.log("AWS Bucket:", process.env.S3_BUCKET_NAME);
+
+
     const url = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     return res.status(200).json({ url, key });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: err.message || "Upload failed" });
   }
+
+  
 }
