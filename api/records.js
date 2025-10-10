@@ -3,7 +3,7 @@ import { pool } from "../db.js";
 
 const allowedOrigin =
   process.env.NODE_ENV === "production"
-    ? "http://localhost:3000"
+    ? "https://brokken-front-yt8g.vercel.app"
     : "*";
 export default async function handler(req, res) {
   // CORS
