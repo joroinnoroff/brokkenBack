@@ -9,7 +9,7 @@ const allowedOrigin =
 export default async function handler(req, res) {
   // CORS
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin); 
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
     "Content-Type, Authorization, X-Requested-With"
@@ -46,6 +46,25 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "DB insert error" });
     }
   }
+
+  if (req.method === "PUT") {
+    const { id } = req.query;
+    const { name, image, start_date, end_date, location, description } = req.body;
+  
+    if (!id) return res.status(400).json({ error: "Event ID required" });
+  
+    try {
+      const result = await pool.query(
+        `UPDATE events SET name=$1, image=$2, start_date=$3, end_date=$4, location=$5, description=$6 WHERE id=$7 RETURNING *`,
+        [name, image, start_date, end_date, location, description, id]
+      );
+      return res.status(200).json(result.rows[0]);
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "DB update error" });
+    }
+  }
+  
 
   if (req.method === "DELETE") {
     const { id } = req.query; 
