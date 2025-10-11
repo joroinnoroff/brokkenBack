@@ -37,7 +37,7 @@ export default async function handler(req, res) {
     try {
       const result = await pool.query(
         `INSERT INTO events (name, image, start_date, end_date, location, description)
-         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
         [name, image, start_date, end_date, location, description]
       );
       return res.status(201).json(result.rows[0]);
