@@ -5,11 +5,15 @@ const allowedOrigin =
   process.env.NODE_ENV === "production"
     ? "https://brokken-front-yt8g.vercel.app"
     : "*";
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin); 
   res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
 
   if (req.method === "OPTIONS") {
     return res.status(200).end();
@@ -43,22 +47,18 @@ export default async function handler(req, res) {
     }
   }
 
-
-  // DELETE a record
   if (req.method === "DELETE") {
     const { id } = req.query; 
-    if (!id) return res.status(400).json({ error: "Record ID required" });
-  
+    if (!id) return res.status(400).json({ error: "event ID required" });
+
     try {
       await pool.query("DELETE FROM events WHERE id = $1", [id]);
-      return res.status(200).json({ message: "Record deleted successfully" });
+      return res.status(200).json({ message: "event deleted successfully" });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: "DB delete error" });
     }
   }
-  
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
 
-  res.status(405).end(`Method ${req.method} Not Allowed`);
+  return res.status(405).end(`Method ${req.method} Not Allowed`);
 }
