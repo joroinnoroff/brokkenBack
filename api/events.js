@@ -1,43 +1,64 @@
 // api/events.js
 import { pool } from "../db.js";
 
+const allowedOrigin =
+  process.env.NODE_ENV === "production"
+    ? "https://brokken-front-yt8g.vercel.app"
+    : "*";
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader("Access-Control-Allow-Origin", "https://brokken-front-yt8g.vercel.app"); // your frontend URL
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  // CORS
+  res.setHeader("Access-Control-Allow-Origin", allowedOrigin); 
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // Handle preflight requests
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  // GET all events
   if (req.method === "GET") {
     try {
       const result = await pool.query("SELECT * FROM events ORDER BY start_date DESC");
       return res.status(200).json(result.rows);
     } catch (err) {
-      console.error("Error fetching events:", err);
+      console.error(err);
       return res.status(500).json({ error: "DB fetch error" });
     }
   }
 
-  // POST a new event
   if (req.method === "POST") {
-    const { name, start_date, end_date, location, image, description } = req.body;
+    const { name, image, start_date, end_date, location, description } = req.body;
 
-    if (!name || !start_date) {
-      return res.status(400).json({ error: "Name and start_date are required" });
-    }
+    if (!name) return res.status(400).json({ error: "Name required" });
 
     try {
       const result = await pool.query(
-        `INSERT INTO events (name, start_date, end_date, location, image, description)
-         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-        [name, start_date, end_date, location, image, description]
+        `INSERT INTO events (name, image, start_date, end_date, location, description)
+         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
+        [name, image, start_date, end_date, location, description]
       );
       return res.status(201).json(result.rows[0]);
     } catch (err) {
-      console.error("Error inserting event:", err);
+      console.error(err);
       return res.status(500).json({ error: "DB insert error" });
+    }
+  }
+
+
+  // DELETE a record
+  if (req.method === "DELETE") {
+    const { id } = req.query; 
+    if (!id) return res.status(400).json({ error: "Record ID required" });
+  
+    try {
+      await pool.query("DELETE FROM events WHERE id = $1", [id]);
+      return res.status(200).json({ message: "Record deleted successfully" });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ error: "DB delete error" });
+    }
+  }
+  
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
+
+  res.status(405).end(`Method ${req.method} Not Allowed`);
+}
