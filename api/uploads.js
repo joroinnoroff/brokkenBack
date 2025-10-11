@@ -24,7 +24,7 @@ export default async function handler(req, res) {
   // Handle CORS
   const allowedOrigin =
     process.env.NODE_ENV === "production"
-      ? "https://brokken-front-yt8g.vercel.app"
+      ? "http://localhost:3000/"
       : "*";
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin);
   res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
