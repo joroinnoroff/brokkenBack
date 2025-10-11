@@ -40,9 +40,8 @@ export default async function handler(req, res) {
     if (!file) return res.status(400).json({ error: "No file uploaded" });
 
     const fileStream = fs.createReadStream(file.filepath);
-    const folder = fields.folder?.[0] || "uploads"; // default to uploads
-const key = `${prefix}${folder}/${Date.now()}-${file.originalFilename}`;
-
+    const prefix = process.env.NODE_ENV === "development" ? "dev/" : "";
+    const key = `${prefix}uploads/${Date.now()}-${file.originalFilename}`;
 
      
     await s3.send(
