@@ -17,6 +17,15 @@ export default async function handler(req, res) {
 
   if (req.method === "GET") {
     try {
+      // If ID is provided, fetch only one event
+      if (req.query.id) {
+        const result = await pool.query("SELECT * FROM records WHERE id = $1", [
+          req.query.id,
+        ]);
+        return res.status(200).json(result.rows[0] || null);
+      }
+  
+      //  Otherwise return all events
       const result = await pool.query("SELECT * FROM records ORDER BY release_date DESC");
       return res.status(200).json(result.rows);
     } catch (err) {
@@ -24,6 +33,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "DB fetch error" });
     }
   }
+  
 
   if (req.method === "POST") {
     const { name, image, release_date, price, description } = req.body;
