@@ -5,6 +5,7 @@ const allowedOrigin =
   process.env.NODE_ENV === "production"
     ? "https://brokken-front-yt8g.vercel.app"
     : "*";
+
 export default async function handler(req, res) {
   // CORS
   res.setHeader("Access-Control-Allow-Origin", allowedOrigin); 
@@ -15,86 +16,64 @@ export default async function handler(req, res) {
     return res.status(200).end();
   }
 
-  if (req.method === "GET") {
-    try {
-      // If ID is provided, fetch only one event
+  try {
+    // GET all records or by ID
+    if (req.method === "GET") {
       if (req.query.id) {
-        const result = await pool.query("SELECT * FROM records WHERE id = $1", [
-          req.query.id,
-        ]);
+        const result = await pool.query("SELECT * FROM records WHERE id = $1", [req.query.id]);
         return res.status(200).json(result.rows[0] || null);
       }
-  
-      //  Otherwise return all events
       const result = await pool.query("SELECT * FROM records ORDER BY release_date DESC");
       return res.status(200).json(result.rows);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: "DB fetch error" });
     }
-  }
-  
 
-  if (req.method === "POST") {
-    const { name, image, release_date, price, description } = req.body;
+    // CREATE new record
+    if (req.method === "POST") {
+      const { name, image, release_date, price, description } = req.body;
+      if (!name || !price) return res.status(400).json({ error: "Name and price required" });
 
-    if (!name || !price) return res.status(400).json({ error: "Name and price required" });
-
-    try {
       const result = await pool.query(
         `INSERT INTO records (name, image, release_date, price, description)
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
         [name, image, release_date, price, description]
       );
       return res.status(201).json(result.rows[0]);
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: "DB insert error" });
     }
-  }
 
-  if (req.method === "PUT") {
-    const { id } = req.query;
-    if (!id) return res.status(400).json({ error: "Record ID required" });
-  
-    const numericId = parseInt(id, 10);
-    if (isNaN(numericId)) return res.status(400).json({ error: "Invalid ID" });
-  
-    const fields = req.body; // Only changed fields
-    const keys = Object.keys(fields);
-    if (keys.length === 0) return res.status(400).json({ error: "No fields to update" });
-  
-    const setClause = keys.map((key, index) => `${key} = $${index + 1}`).join(", ");
-    const values = Object.values(fields);
-  
-    try {
+    // UPDATE record by ID
+    if (req.method === "PUT") {
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ error: "Record ID required" });
+
+      const numericId = parseInt(id, 10);
+      if (isNaN(numericId)) return res.status(400).json({ error: "Invalid ID" });
+
+      const fields = req.body;
+      const keys = Object.keys(fields);
+      if (keys.length === 0) return res.status(400).json({ error: "No fields to update" });
+
+      const setClause = keys.map((key, index) => `${key} = $${index + 1}`).join(", ");
+      const values = Object.values(fields);
+
       const result = await pool.query(
         `UPDATE records SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
         [...values, numericId]
       );
       return res.status(200).json(result.rows[0]);
-    } catch (err) {
-      console.error("DB update error:", err);
-      return res.status(500).json({ error: "DB update error" });
     }
-  }
-  
-  
-  // DELETE a record
-  if (req.method === "DELETE") {
-    const { id } = req.query; 
-    if (!id) return res.status(400).json({ error: "Record ID required" });
-  
-    try {
+
+    // DELETE record
+    if (req.method === "DELETE") {
+      const { id } = req.query;
+      if (!id) return res.status(400).json({ error: "Record ID required" });
+
       await pool.query("DELETE FROM records WHERE id = $1", [id]);
       return res.status(200).json({ message: "Record deleted successfully" });
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: "DB delete error" });
     }
-  }
-  
-  res.setHeader("Access-Control-Allow-Methods", "GET,POST,DELETE,OPTIONS");
 
-  res.status(405).end(`Method ${req.method} Not Allowed`);
+    res.status(405).end(`Method ${req.method} Not Allowed`);
+  } catch (err) {
+    console.error("DB error:", err);
+    res.status(500).json({ error: "Database error" });
+  }
 }

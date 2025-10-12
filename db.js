@@ -4,14 +4,22 @@ dotenv.config();
 
 const { Pool } = pkg;
 
-export const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false, 
-  },
-});
+// Use a global variable to persist the pool across serverless invocations
+let pool;
 
-// Quick test on startup
+if (!global.pool) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+  global.pool = pool;
+} else {
+  pool = global.pool;
+}
+
+// Optional: test connection on cold start
 pool.connect()
   .then(() => console.log("✅ Connected to Neon PostgreSQL"))
   .catch(err => console.error("❌ Database connection failed:", err));
+
+export { pool };
