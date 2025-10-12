@@ -48,17 +48,17 @@ export default async function handler(req, res) {
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) return res.status(400).json({ error: "Invalid ID" });
 
-      const fields = req.body;
-      const keys = Object.keys(fields);
-      if (keys.length === 0) return res.status(400).json({ error: "No fields to update" });
-
-      const setClause = keys.map((key, index) => `${key} = $${index + 1}`).join(", ");
-      const values = Object.values(fields);
+      const { name, image, release_date, price, description } = req.body;
+      if (!name || price == null) return res.status(400).json({ error: "Name and price required" });
 
       const result = await pool.query(
-        `UPDATE records SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
-        [...values, numericId]
+        `UPDATE records
+         SET name = $1, image = $2, release_date = $3, price = $4, description = $5
+         WHERE id = $6
+         RETURNING *`,
+        [name, image || "", release_date || null, price, description || "", numericId]
       );
+
       return res.status(200).json(result.rows[0]);
     }
 
