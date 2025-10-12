@@ -55,21 +55,32 @@ export default async function handler(req, res) {
 
   if (req.method === "PUT") {
     const { id } = req.query;
-    const { name, image, release_date, price, description } = req.body;
-  
     if (!id) return res.status(400).json({ error: "Record ID required" });
+  
+    const fields = req.body;
+    const keys = Object.keys(fields);
+  
+    if (keys.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+  
+    // Build dynamic query
+    const setClause = keys.map((key, index) => `${key} = $${index + 1}`).join(", ");
+    const values = Object.values(fields);
   
     try {
       const result = await pool.query(
-        `UPDATE records SET name=$1, image=$2, release_date=$3, price=$4, description=$5 WHERE id=$7 RETURNING *`,
-        [name, image, release_date, price, description, id]
+        `UPDATE records SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
+        [...values, id]
       );
+  
       return res.status(200).json(result.rows[0]);
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: "DB update error" });
     }
   }
+  
   
 
 

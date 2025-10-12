@@ -61,21 +61,32 @@ export default async function handler(req, res) {
 
   if (req.method === "PUT") {
     const { id } = req.query;
-    const { name, image, start_date, end_date, location, description } = req.body;
-  
     if (!id) return res.status(400).json({ error: "Event ID required" });
+  
+    const fields = req.body;
+    const keys = Object.keys(fields);
+  
+    if (keys.length === 0) {
+      return res.status(400).json({ error: "No fields to update" });
+    }
+  
+    // Dynamisk SQL for kun endrede felter
+    const setClause = keys.map((key, index) => `${key} = $${index + 1}`).join(", ");
+    const values = Object.values(fields);
   
     try {
       const result = await pool.query(
-        `UPDATE events SET name=$1, image=$2, start_date=$3, end_date=$4, location=$5, description=$6 WHERE id=$7 RETURNING *`,
-        [name, image, start_date, end_date, location, description, id]
+        `UPDATE events SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
+        [...values, id]
       );
+  
       return res.status(200).json(result.rows[0]);
     } catch (err) {
-      console.error(err);
+      console.error("Error updating event:", err);
       return res.status(500).json({ error: "DB update error" });
     }
   }
+  
   
 
   if (req.method === "DELETE") {
