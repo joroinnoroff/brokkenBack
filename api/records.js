@@ -57,12 +57,12 @@ export default async function handler(req, res) {
     const { id } = req.query;
     if (!id) return res.status(400).json({ error: "Record ID required" });
   
-    const fields = req.body; // Only changed fields sent from frontend
-    const keys = Object.keys(fields);
+    const numericId = parseInt(id, 10);
+    if (isNaN(numericId)) return res.status(400).json({ error: "Invalid ID" });
   
-    if (keys.length === 0) {
-      return res.status(400).json({ error: "No fields to update" });
-    }
+    const fields = req.body; // Only changed fields
+    const keys = Object.keys(fields);
+    if (keys.length === 0) return res.status(400).json({ error: "No fields to update" });
   
     const setClause = keys.map((key, index) => `${key} = $${index + 1}`).join(", ");
     const values = Object.values(fields);
@@ -70,7 +70,7 @@ export default async function handler(req, res) {
     try {
       const result = await pool.query(
         `UPDATE records SET ${setClause} WHERE id = $${keys.length + 1} RETURNING *`,
-        [...values, id]
+        [...values, numericId]
       );
       return res.status(200).json(result.rows[0]);
     } catch (err) {
@@ -78,6 +78,7 @@ export default async function handler(req, res) {
       return res.status(500).json({ error: "DB update error" });
     }
   }
+  
   
   // DELETE a record
   if (req.method === "DELETE") {
