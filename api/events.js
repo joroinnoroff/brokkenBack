@@ -45,12 +45,12 @@ export default async function handler(req, res) {
     const { name, image, start_date, end_date, location, description } = req.body;
 
     if (!name) return res.status(400).json({ error: "Name required" });
-
+    const imagesArray = Array.isArray(image) ? image : image ? [image] : []; 
     try {
       const result = await pool.query(
         `INSERT INTO events (name, image, start_date, end_date, location, description)
          VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-        [name, image, start_date, end_date, location, description]
+        [name, imagesArray, start_date, end_date, location, description]
       );
       return res.status(201).json(result.rows[0]);
     } catch (err) {
