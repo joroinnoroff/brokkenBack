@@ -41,12 +41,14 @@ export default async function handler(req, res) {
     // POST: create new record
     if (req.method === "POST") {
       const { name, image, release_date, price, description } = req.body;
+      
       if (!name || price == null) return res.status(400).json({ error: "Name and price required" });
-
+      
+      const imagesArray = Array.isArray(image) ? image : image ? [image] : []; 
       const result = await pool.query(
         `INSERT INTO records (name, image, release_date, price, description)
          VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [name, image || "", release_date || null, price, description || ""]
+        [name, imagesArray, release_date || null, price, description || ""]
       );
       return res.status(201).json(result.rows[0]);
     }
@@ -61,12 +63,12 @@ export default async function handler(req, res) {
 
       const { name, image, release_date, price, description } = req.body;
       if (!name || price == null) return res.status(400).json({ error: "Name and price required" });
-
+      const imagesArray = Array.isArray(image) ? image : image ? [image] : []; 
       const result = await pool.query(
         `UPDATE records
          SET name=$1, image=$2, release_date=$3, price=$4, description=$5
          WHERE id=$6 RETURNING *`,
-        [name, image || "", release_date || null, price, description || "", numericId]
+        [name, imagesArray, release_date || null, price, description || "", numericId]
       );
       return res.status(200).json(result.rows[0]);
     }
