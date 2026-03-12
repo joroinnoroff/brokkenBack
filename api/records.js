@@ -40,15 +40,15 @@ export default async function handler(req, res) {
 
     // POST: create new record
     if (req.method === "POST") {
-      const { name, image, release_date, price, description } = req.body;
+      const { name, image, release_date, price, description, genre } = req.body;
       
       if (!name || price == null) return res.status(400).json({ error: "Name and price required" });
       
       const imagesArray = Array.isArray(image) ? image : image ? [image] : []; 
       const result = await pool.query(
-        `INSERT INTO records (name, image, release_date, price, description)
-         VALUES ($1,$2,$3,$4,$5) RETURNING *`,
-        [name, imagesArray, release_date || null, price, description || ""]
+        `INSERT INTO records (name, image, release_date, price, description, genre)
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [name, imagesArray, release_date || null, price, description || "", genre || null]
       );
       return res.status(201).json(result.rows[0]);
     }
@@ -61,14 +61,14 @@ export default async function handler(req, res) {
       const numericId = parseInt(id, 10);
       if (isNaN(numericId)) return res.status(400).json({ error: "Invalid ID" });
 
-      const { name, image, release_date, price, description } = req.body;
+      const { name, image, release_date, price, description, genre } = req.body;
       if (!name || price == null) return res.status(400).json({ error: "Name and price required" });
       const imagesArray = Array.isArray(image) ? image : image ? [image] : []; 
       const result = await pool.query(
         `UPDATE records
-         SET name=$1, image=$2, release_date=$3, price=$4, description=$5
-         WHERE id=$6 RETURNING *`,
-        [name, imagesArray, release_date || null, price, description || "", numericId]
+         SET name=$1, image=$2, release_date=$3, price=$4, description=$5, genre=$6
+         WHERE id=$7 RETURNING *`,
+        [name, imagesArray, release_date || null, price, description || "", genre || null, numericId]
       );
       return res.status(200).json(result.rows[0]);
     }
